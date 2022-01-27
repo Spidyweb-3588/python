@@ -1,9 +1,4 @@
-
 # coding: utf-8
-
-# In[16]:
-
-
 #스파크가 pandas보다 느리고, 스파크는 큰 데이터가 아니면 의미없지만, 스파크에서 배운 data transformation을 활용 하기위해 스파크를 채택
 import requests
 from bs4 import BeautifulSoup
@@ -16,7 +11,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import Row
 from pyspark.sql.types import StructField, StructType, DoubleType, IntegerType, TimestampType, StringType
 #sparksession 드라이버 프로세스 얻기
-spark = SparkSession.builder.master("local[*]").appName("pyspark").getOrCreate()
+spark = SparkSession.builder.master("local[*]").config("spark.driver.extraClassPath","C:/spark/spark-3.1.2-bin-hadoop2.7/jars/mysql-connector-java-8.0.28").appName("pyspark").getOrCreate()
 
 def getCovid19Info(start_date: date, end_date: date):
     url = 'http://openapi.data.go.kr/openapi/service/rest/Covid19/getCovid19InfStateJson'
@@ -94,7 +89,13 @@ def getAllCovidAffectedNumbers():
     from pyspark.sql import Window
     now = datetime.now()
     df_Covid19 =  getCovid19SparkDataFrame(date(2019,1,1), now)
-    df_Covid19_result_All=    df_Covid19.distinct()              .withColumn("decidecnt-1",F.coalesce(F.lead(F.col("decidecnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .withColumn("deathcnt-1",F.coalesce(F.lead(F.col("deathcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .withColumn("accexamcnt-1",F.coalesce(F.lead(F.col("accexamcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .select(F.from_unixtime(F.unix_timestamp(F.col("statedt"),"yyyyMMdd"),"yyyy-MM-dd").alias("기준날짜")
+    df_Covid19_result_All=\
+    df_Covid19.distinct()\
+              .withColumn("decidecnt-1",F.coalesce(F.lead(F.col("decidecnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("deathcnt-1",F.coalesce(F.lead(F.col("deathcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("accexamcnt-1",F.coalesce(F.lead(F.col("accexamcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("기준날짜",F.from_unixtime(F.unix_timestamp(F.col("statedt"),"yyyyMMdd"),"yyyy-MM-dd"))\
+              .select(F.col("기준날짜")
                      ,(F.col("decidecnt")-F.col("decidecnt-1")).alias("당일확진자수")
                      ,F.col("decidecnt").alias("누적확진자수")
                      ,(F.col("deathcnt")-F.col("deathcnt-1")).alias("당일사망자수")
@@ -110,8 +111,16 @@ def getAllCovidAffectedNumbers():
 def getTodayCovidAffectedNumbers():
     from pyspark.sql import Window
     now = datetime.now()
-    df_Covid19 =  getCovid19SparkDataFrame(now, now)
-    df_Covid19_result_Today=    df_Covid19.distinct()              .withColumn("decidecnt-1",F.coalesce(F.lead(F.col("decidecnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .withColumn("deathcnt-1",F.coalesce(F.lead(F.col("deathcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .withColumn("accexamcnt-1",F.coalesce(F.lead(F.col("accexamcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .select(F.from_unixtime(F.unix_timestamp(F.col("statedt"),"yyyyMMdd"),"yyyy-MM-dd").alias("기준날짜")
+    now_date=now.strftime('%Y-%m-%d')
+    df_Covid19 =  getCovid19SparkDataFrame(date(2019,1,1), now)
+    df_Covid19_result_Today=\
+    df_Covid19.distinct()\
+              .withColumn("decidecnt-1",F.coalesce(F.lead(F.col("decidecnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("deathcnt-1",F.coalesce(F.lead(F.col("deathcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("accexamcnt-1",F.coalesce(F.lead(F.col("accexamcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("기준날짜",F.from_unixtime(F.unix_timestamp(F.col("statedt"),"yyyyMMdd"),"yyyy-MM-dd"))\
+              .where(F.col("기준날짜")==now_date)\
+              .select(F.col("기준날짜")
                      ,(F.col("decidecnt")-F.col("decidecnt-1")).alias("당일확진자수")
                      ,F.col("decidecnt").alias("누적확진자수")
                      ,(F.col("deathcnt")-F.col("deathcnt-1")).alias("당일사망자수")
@@ -127,8 +136,15 @@ def getTodayCovidAffectedNumbers():
 def getPeriodCovidAffectedNumbers(start_date: Union[date, datetime], end_date: Union[date,datetime]):
     from pyspark.sql import Window
     now = datetime.now()
-    df_Covid19 =  getCovid19SparkDataFrame(start_date, end_date)
-    df_Covid19_result_Period=    df_Covid19.distinct()              .withColumn("decidecnt-1",F.coalesce(F.lead(F.col("decidecnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .withColumn("deathcnt-1",F.coalesce(F.lead(F.col("deathcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .withColumn("accexamcnt-1",F.coalesce(F.lead(F.col("accexamcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))              .select(F.from_unixtime(F.unix_timestamp(F.col("statedt"),"yyyyMMdd"),"yyyy-MM-dd").alias("기준날짜")
+    df_Covid19 =  getCovid19SparkDataFrame(date(2019,1,1), now)
+    df_Covid19_result_Period=\
+    df_Covid19.distinct()\
+              .withColumn("decidecnt-1",F.coalesce(F.lead(F.col("decidecnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("deathcnt-1",F.coalesce(F.lead(F.col("deathcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("accexamcnt-1",F.coalesce(F.lead(F.col("accexamcnt"),1).over(Window.orderBy(F.col("statedt").desc())),F.lit(0)))\
+              .withColumn("기준날짜",F.from_unixtime(F.unix_timestamp(F.col("statedt"),"yyyyMMdd"),"yyyy-MM-dd"))\
+              .where(F.col("기준날짜").between(start_date,end_date))\
+              .select(F.col("기준날짜")
                      ,(F.col("decidecnt")-F.col("decidecnt-1")).alias("당일확진자수")
                      ,F.col("decidecnt").alias("누적확진자수")
                      ,(F.col("deathcnt")-F.col("deathcnt-1")).alias("당일사망자수")
@@ -136,46 +152,33 @@ def getPeriodCovidAffectedNumbers(start_date: Union[date, datetime], end_date: U
                      ,(F.col("accexamcnt")-F.col("accexamcnt-1")).alias("당일의심신고검사자수")
                      ,F.col("accexamcnt").alias("누적의심신고검사자수")
                      ,F.round((F.col("deathcnt")/F.col("decidecnt")*F.lit(100)),2).alias("전체확진자치명률(%)"))
-    return df_Covid19_result_Period ,start_date, end_date
+    return df_Covid19_result_Period, start_date, end_date
 
 #위의 3개의 메소드를 통해 데이터프레임을 입력받아 c드라이브 covid19_result 폴더에 함수 형태에 따른csv파일로 저장
 #함수 내의 매개변수를 인식 시키는 법 찾기, class를 통해 구현, method function 구분해서 완성시키기
+# count() takes exactly one argument (0 given) 해결하기
 def saveDataAsCSV(dataframe):
-    start_date=dataframe[1]
-    end_date=dataframe[2]
-    if dataframe[0].select(F.count("*")) == getPeriodCovidAffectedNumbers(start_date, end_date).select(F.count("*")):
-        return dataframe.coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/period/")
-
-def saveDataAsCSV(dataframe):
-    if dataframe.count() == getAllCovidAffectedNumbers().count():
-        print("it worked!")
-        return dataframe.coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/all_day/")
-    elif dataframe.count() == getTodayCovidAffectedNumbers().count():
-        print("it worked!")
-        return dataframe.coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/today/")
-"""
-매개변수 입력 먹히게끔 수정
-    elif dataframe.count() == getPeriodCovidAffectedNumbers().count():
-        print("it worked!")
-        return dataframe.coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/period/")
+    if type(dataframe) == tuple:
+        start_date=dataframe[1]
+        end_date=dataframe[2]
+        if dataframe[0].count() == getPeriodCovidAffectedNumbers(start_date, end_date)[0].count():
+            print("it worked!")
+            return dataframe[0].coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/period/")
     else:
-        pass"""
+        if dataframe.count() == getAllCovidAffectedNumbers().count():
+            print("it worked!")
+            return dataframe.coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/all_day/")
+        elif dataframe.count() == getTodayCovidAffectedNumbers().count():
+            print("it worked!")
+            return dataframe.coalesce(1).write.format("csv").mode("overwrite").save("C:/covid19_result/today/")
 
-
-# In[17]:
-
-
-saveDataAsCSV(getPeriodCovidAffectedNumbers(date(2021,1,15),date(2021,2,22)))
-
-
-# In[12]:
-
-
-getAllCovidAffectedNumbers().select(F.count("*"))
-
-
-# In[ ]:
-
-
-saveDataAsCSV(getPeriodCovidAffectedNumbers(date(2021,1,15),date(2021,2,22)))
-
+def saveDataToMySQL(dataframe):
+    if dataframe.count() == getAllCovidAffectedNumbers().count():
+        print("insert to mysql Covid19 table")
+        return dataframe.coalesce(1).write.format("jdbc").options(
+            url='jdbc:mysql://localhost:3306/COVID19',
+            driver='com.mysql.cj.jdbc.Driver',
+            dbtable='Covid_19_info',
+            user='root',
+            password='root'
+        ).mode('overwrite').save()
