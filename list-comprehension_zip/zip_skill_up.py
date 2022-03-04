@@ -1,21 +1,20 @@
 list_1 = ["a","b","c","d"]
 list_2 = [1,2,3,4,5,6,7]
 
+#list 2개를 묶어 새로운 tuple들의 list 생성
 new_list = list(zip(list_1, list_2))
 print(new_list)
+print("\n")
 
+#tuple들의 list는 각 값을 출력할 수 있다.
 for n, p in zip(list_1, list_2):
     print(n,p)
+print("\n")
 
+#zip을 이용하여 list 2개를 묶고 dictionary로써 생성할 수도 있다.
 new_dict = dict(zip(list_1, list_2))
 print(new_dict)
-
-name = ['merona', 'gugucon']
-price = [500, 1000]
-
-icecream = {k:v for k, v in zip(name, price)}
-print(icecream)
-
+print("\n")
 
 tuple_1 = (1,2,3)
 tuple_2 = ("a","b","c","d")
