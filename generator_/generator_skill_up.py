@@ -10,7 +10,7 @@ gen = generator()
 
 print(type(gen))# <class 'generator'> 출력
 print(next(gen))# 1출력
-print(next(gen))# 3출력
+print(gen.__next__())# 다음과 같은 방법으로도 출력이 가능하다. 3출력
 print(next(gen))# 5출력
 print(next(gen))# a출력
 #print(next(gen)) StopIteration출력

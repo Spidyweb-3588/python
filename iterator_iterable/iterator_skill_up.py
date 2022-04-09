@@ -17,7 +17,7 @@ print(type(a))
 a = iter(a)
 print(type(a))
 print(a.__next__())#1출력
-print(a.__next__())#2출력
+print(next(a))#다음과 같은 방법으로도 출력이 가능하다. 2출력
 print(a.__next__())#3출력
 #print(a.__next__())#StopIteration출력
 
