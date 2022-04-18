@@ -12,4 +12,5 @@ google_sheet_api\
 [time_datetime_pendulum_skill_up](https://spidyweb.tistory.com/369)\
 [iterator_skill_up](https://spidyweb.tistory.com/362)\
 [generator_skill_up](https://spidyweb.tistory.com/372)\
-[module_package_skill_up](https://spidyweb.tistory.com/358)
+[module_package_skill_up](https://spidyweb.tistory.com/358)\
+[re_skill_up](https://spidyweb.tistory.com/373?category=831292)
