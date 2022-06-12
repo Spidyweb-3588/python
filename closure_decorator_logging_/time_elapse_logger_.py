@@ -1,26 +1,22 @@
 import time
-from time_datetime_pendulum import datetime_skill_up
 
-def estimate_time_elpase(func):
-    def wrapper():
+def estimate_time_elapse(func):
+    def wrapper(*args,**kwargs):
         start_time = time.time()
         print(start_time)
-        print(func())
+        print(func(*args,**kwargs))
         end_time = time.time()
         print(end_time)
-        print("elapsed time :",end_time - start_time)
-        return func
+        print("elapsed time :",round(end_time - start_time,2))
+        return
     return wrapper
 
-@estimate_time_elpase
+"""@estimate_time_elapse
 def add_tenbillion():
     sum = 0
     for i in range(1000000000):
         sum = sum + 1
     return sum
 
-def recursive_func():
-    pass
-
 if __name__=="__main__":
-    pass
+    add_tenbillion()"""
