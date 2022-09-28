@@ -8,7 +8,7 @@ from pyspark.sql import Window
 #sparksession 드라이버 프로세스 얻기
 spark = SparkSession.builder.appName("sample").master("local[*]").getOrCreate()
 
-df_crash = spark.read.format("csv").option("header","true").option("inferschema","true").load("C:/Users/jiho3/Downloads/Motor_Vehicle_Collisions_-_Crashes.csv")
+df_crash = spark.read.format("csv").option("header","true").option("inferschema","true").load("C:/Users/JIHO PARK/Downloads/Motor_Vehicle_Collisions_-_Crashes.csv")
 
 df_crash_losses = df_crash \
     .withColumn("CRASH_DATE_FORMATTED",
@@ -21,18 +21,20 @@ df_crash_losses = df_crash \
 
 # 날짜별 부상자 숫자 순위를 메기는 컬럼과 날짜별 사망자 숫자 순위를 메기는 컬럼을 생성해서 날짜별 부상자수가 1위거나 사망자수가 1위인 시간,날짜,컬럼조회
 df_crash_or = df_crash_losses \
-    .withColumn("MAX_INJURED_DESC_RN", F.row_number().over(
-    Window.partitionBy(F.col("CRASH_DATE_FORMATTED")).orderBy((F.col("TOTAL_INJURED"))))) \
+    .withColumn("MAX_INJURED_DESC_RN",
+                F.row_number().over(Window.partitionBy(F.col("CRASH_DATE_FORMATTED")).orderBy((F.col("TOTAL_INJURED").desc())))) \
     .withColumn("MAX_KILLED_DESC_RN",
-                F.row_number().over(Window.partitionBy(F.col("CRASH_DATE_FORMATTED")).orderBy((F.col("TOTAL_KILLED"))))) \
+                F.row_number().over(Window.partitionBy(F.col("CRASH_DATE_FORMATTED")).orderBy((F.col("TOTAL_KILLED").desc())))) \
     .where((F.col("MAX_INJURED_DESC_RN") <= 1) | (F.col("MAX_KILLED_DESC_RN") <= 1)) \
     .select(F.col("CRASH_DATE_FORMATTED")
             , F.col("CRASH_TIME_HH")
             , F.col("TOTAL_INJURED")
-            , F.col("TOTAL_KILLED")) \
+            , F.col("TOTAL_KILLED")
+            , F.col("MAX_INJURED_DESC_RN")
+            , F.col("MAX_KILLED_DESC_RN"))\
     .orderBy(F.col("CRASH_DATE_FORMATTED")
              , F.col("CRASH_TIME_HH"))
 
 
-print(df_crash_losses.count())
+print(df_crash_or.show(100))
 spark.stop()
