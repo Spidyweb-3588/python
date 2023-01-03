@@ -1,0 +1,17 @@
+import os
+
+dir_path = "C:/Users/JIHO PARK/Downloads/partitioned_data"
+parquet_cnt = []
+
+for (root, directories, files) in os.walk(dir_path):
+    for d in directories:
+        d_path = os.path.join(root, d)
+
+    for file in files:
+        file_path = os.path.join(root, file)
+        if file_path.endswith(".parquet"):
+            parquet_cnt.append(file_path)
+
+for i in parquet_cnt:
+    print(i)
+print(len(parquet_cnt))
